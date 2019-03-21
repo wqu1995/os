@@ -1,0 +1,5 @@
+Please load 
+	gcc-6.3.0
+before compile the code!
+
+The executable will be named: linker
