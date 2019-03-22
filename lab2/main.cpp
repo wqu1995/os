@@ -178,7 +178,7 @@ void print_result(){
 int main(int argc, char const *argv[]){
 	init_rands("rfile");
 	evt_q = new Event_Q();
-	sch = new FScheduler();
+	sch = new SRScheduler();
 	init_process(argv[1]);
 	simulation();
 	print_result();
