@@ -18,6 +18,10 @@ namespace PS{
 		process_state_t current_state;
 		int s_prio;
 		int d_prio;
+		int io_wait;
+		int cpu_wait;
+		int cpu_rem;
+		int io_until;
 		Process(int i, int at, int tc, int cb, int ib);
 	};
 }

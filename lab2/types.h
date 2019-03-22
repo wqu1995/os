@@ -5,7 +5,8 @@ typedef enum{
 	STATE_CREATED,
 	STATE_READY,
 	STATE_RUNNING,
-	STATE_BLOCKED
+	STATE_BLOCKED,
+	STATE_FINISHED
 } process_state_t;
 
 typedef enum{

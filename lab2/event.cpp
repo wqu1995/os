@@ -18,7 +18,8 @@ void Event_Q::put_event(trans_state_t ts, Process* proc, int time){
 	event *temp = new event(ts, proc, time);
 
 	event *current = e;
-	if(current == NULL){
+	if(current == NULL || current->evt_time > time){
+		temp->next = current;
 		e = temp;
 		return;
 	}
@@ -32,11 +33,15 @@ void Event_Q::put_event(trans_state_t ts, Process* proc, int time){
 }
 
 event* Event_Q::get_event(){
+	if(e == NULL)
+		return NULL;
 	event *res = e;
 	e = e->next;
 	return res;
 }
 int Event_Q::get_next_event_time(){
+	if(e == NULL)
+		return -1;
 	return e->evt_time;
 }
 void Event_Q::print_event(){
@@ -46,4 +51,23 @@ void Event_Q::print_event(){
 		current = current->next;
 	}
 	printf("\n");
+}
+
+void Event_Q::print_eventX(){
+	event *current = e;
+	while(current != NULL){
+		printf("%d:%d:", current->evt_time, current->evt_proc->pid);
+		switch(current->transition){
+			case TRANS_TO_READY:
+				printf("READY  "); 
+				break;
+			case TRANS_TO_RUN:
+				printf("RUNNG  ");
+				break;
+			case TRANS_TO_BLOCK:
+				printf("BLOCK  ");
+				break;
+		}
+		current = current->next;
+	}
 }

@@ -25,6 +25,7 @@ namespace EVTQ{
 		void put_event(trans_state_t ts, Process* proc, int time);
 		int get_next_event_time();
 		void print_event();
+		void print_eventX();
 	};
 }
 

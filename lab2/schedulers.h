@@ -8,17 +8,19 @@ using namespace PS;
 namespace SCH{
 	class Scheduler{
 	public:
+		string name;
 		virtual void add_process(Process *proc)=0;
 		virtual Process* get_next_process()=0;
+		virtual void print_q()=0;
 	};
 
 	class FScheduler: public Scheduler{
 		deque<Process*> run_q;
-		string name = "FCFS";
 	public:
-		//FScheduler();
+		FScheduler();
 		void add_process(Process *proc);
 		Process* get_next_process();
+		void print_q();
 	};
 }
 #endif
