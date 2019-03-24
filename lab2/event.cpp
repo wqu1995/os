@@ -67,6 +67,9 @@ void Event_Q::print_eventX(){
 			case TRANS_TO_BLOCK:
 				printf("BLOCK  ");
 				break;
+			case TRANS_TO_PREEMPT:
+				printf("PREEMPT  ");
+				break;
 		}
 		current = current->next;
 	}

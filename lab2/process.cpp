@@ -15,5 +15,6 @@ Process::Process(int i, int at, int tc, int cb, int ib){
 	cpu_wait = 0;
 	cpu_rem = tc;
 	io_until = 0;
+	current_cpu_time = 0;
 }
 

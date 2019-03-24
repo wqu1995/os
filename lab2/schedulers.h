@@ -3,6 +3,8 @@
 #include <deque>
 #include <queue>
 #include "process.h"
+#include <string>
+using std::to_string;
 using std::deque;
 using std::priority_queue;
 using namespace PS;
@@ -18,6 +20,7 @@ namespace SCH{
 
 	class Scheduler{
 	public:
+		int quantum;
 		string name;
 		virtual void add_process(Process *proc)=0;
 		virtual Process* get_next_process()=0;
@@ -47,6 +50,26 @@ namespace SCH{
 		int count;
 	public:
 		SRScheduler();
+		void add_process(Process *proc);
+		Process* get_next_process();
+		void print_q();
+	};
+
+	class RRScheduler: public Scheduler{
+		deque<Process*> run_q;
+	public:
+		RRScheduler(int q);
+		void add_process(Process *proc);
+		Process* get_next_process();
+		void print_q();
+	};
+
+	class PRScheduler: public Scheduler{
+		sorted_q* *active_q;
+		sorted_q* *expired_q;
+		int maxprio;
+	public:
+		PRScheduler(int q, int maxp);
 		void add_process(Process *proc);
 		Process* get_next_process();
 		void print_q();

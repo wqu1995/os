@@ -13,6 +13,7 @@ namespace PS{
 		int arr_time;
 		int total_cpu;
 		int cpu_burst;
+		int current_cpu_time;
 		int io_burst;
 		int state_ts;
 		process_state_t current_state;

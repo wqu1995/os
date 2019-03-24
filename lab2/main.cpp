@@ -47,26 +47,30 @@ void simulation(){
 		prev_time = current_time-proc->state_ts;
 		switch(evt->transition){
 			case TRANS_TO_READY:{
-				if(proc->current_state == STATE_CREATED)
-					printf("%d %d %d: CREATED -> READY\n",current_time, proc->pid, prev_time);
-				else if(proc->current_state == STATE_BLOCKED){
-					proc->io_until = 0;
-					printf("%d %d %d: BLOCK -> READY\n",current_time, proc->pid, prev_time);
-				}
-				
-				proc->current_state = STATE_READY;
 				proc->state_ts = current_time;
+				if(proc->current_state == STATE_PREEMPTED){
+					printf("%d %d %d: RUNNG -> READY cb=%d rem=%d prio=%d\n",current_time, proc->pid, prev_time, proc->current_cpu_time, proc->cpu_rem, proc->d_prio);
+				}
+				else{
+					if(proc->current_state == STATE_CREATED)
+						printf("%d %d %d: CREATED -> READY\n",current_time, proc->pid, prev_time);
+					else if(proc->current_state == STATE_BLOCKED){
+						proc->io_until = 0;
+						printf("%d %d %d: BLOCK -> READY\n",current_time, proc->pid, prev_time);
+					}
 
-				if(longest_io_proc != NULL && longest_io_proc->pid == proc->pid){
-					longest_io_proc = NULL;
-					int temp_long = 0;
-					for(Process *procx : proc_list){
-						if(procx->current_state == STATE_BLOCKED && procx->io_until>temp_long){
-							longest_io_proc = procx;
-							temp_long = procx->io_until;
+					if(longest_io_proc != NULL && longest_io_proc->pid == proc->pid){
+						longest_io_proc = NULL;
+						int temp_long = 0;
+						for(Process *procx : proc_list){
+							if(procx->current_state == STATE_BLOCKED && procx->io_until>temp_long){
+								longest_io_proc = procx;
+								temp_long = procx->io_until;
+							}
 						}
 					}
 				}
+				//proc->current_state = STATE_READY;
 				sch->add_process(proc);
 				call_sch = true;
 
@@ -77,29 +81,51 @@ void simulation(){
 				proc->current_state = STATE_RUNNING;
 				proc->state_ts = current_time;
 				proc->cpu_wait +=prev_time;
-				int cb = min(proc->cpu_rem, myrandom(proc->cpu_burst));
-				cpu_in_use+=cb;
+				int cb;
+				if(proc->current_cpu_time != 0){
+					cb = proc->current_cpu_time;
+				}
+				else{
+					cb = min(proc->cpu_rem, myrandom(proc->cpu_burst));
+					proc->current_cpu_time = cb;
+				}
 				printf("%d %d %d: READY -> RUNNG cb=%d rem=%d prio=%d\n",current_time, proc->pid, prev_time, cb, proc->cpu_rem, proc->d_prio);
+				if(cb <=sch->quantum){
+					//not pre
+					printf("  AddEvent(%d:%d:%s):  ", current_time+cb, proc->pid, "BLOCK");
+					evt_q->print_eventX();
+						evt_q->put_event(TRANS_TO_BLOCK, proc, current_time+cb);
+					printf("==>  ");
+					evt_q->print_eventX();
+					printf("\n");
+				}
+				else{
+					cb = sch->quantum;
+					printf("  AddEvent(%d:%d:%s):  ", current_time+cb, proc->pid, "PREEMPT");
+					evt_q->print_eventX();
+						evt_q->put_event(TRANS_TO_PREEMPT, proc, current_time+cb);
+					printf("==>  ");
+					evt_q->print_eventX();
+					printf("\n");
+				}
+
+				cpu_in_use+=cb;
 				proc->cpu_rem -= cb;
 				
-				printf("  AddEvent(%d:%d:%s):  ", current_time+cb, proc->pid, "BLOCK");
-				evt_q->print_eventX();
-					evt_q->put_event(TRANS_TO_BLOCK, proc, current_time+cb);
-				printf("==>  ");
-				evt_q->print_eventX();
-				printf("\n");
 				break;
 			}
 			case TRANS_TO_BLOCK:{
 				if(current_running_proc->pid == proc->pid)
 					current_running_proc = NULL;
 				proc->state_ts = current_time;
+				proc->current_cpu_time = 0;
 				if(proc->cpu_rem == 0){
 					proc->current_state = STATE_FINISHED;
 					printf("%d %d %d: Done\n", current_time, proc->pid, prev_time);
 				}
 				else{
 					proc->current_state = STATE_BLOCKED;
+					//proc->d_prio = proc->s_prio-1;
 					int ib = myrandom(proc->io_burst);
 					proc->io_wait+= ib;
 					proc->io_until = current_time+ib;
@@ -122,6 +148,18 @@ void simulation(){
 				}
 				call_sch = true;
 				break;
+			}
+			case TRANS_TO_PREEMPT:{
+				if(current_running_proc->pid == proc->pid)
+					current_running_proc = NULL;
+				proc->current_cpu_time -=prev_time;
+/*				if(proc->d_prio == -1)
+					proc->d_prio = proc->s_prio-1;
+				else
+					proc->d_prio--;*/
+				//proc->state_ts = current_time;
+				proc->current_state = STATE_PREEMPTED;
+				evt_q->put_event(TRANS_TO_READY, proc, current_time);
 			}
 		}
 		delete evt;
@@ -176,9 +214,11 @@ void print_result(){
 }
 
 int main(int argc, char const *argv[]){
+	int quantum = 5;
+	max_prio = 3;
 	init_rands("rfile");
 	evt_q = new Event_Q();
-	sch = new SRScheduler();
+	sch = new PRScheduler(quantum, max_prio);
 	init_process(argv[1]);
 	simulation();
 	print_result();
