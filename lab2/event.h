@@ -26,6 +26,9 @@ namespace EVTQ{
 		int get_next_event_time();
 		void print_event();
 		void print_eventX();
+		int get_next_event_pid();
+		event* remove_event(Process* proc);
+		event* get_next_proc_event(Process* proc);
 	};
 }
 

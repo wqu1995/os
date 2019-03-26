@@ -50,7 +50,6 @@ void Event_Q::print_event(){
 		printf("%d:%d ",current->evt_time, current->evt_proc->pid );
 		current = current->next;
 	}
-	printf("\n");
 }
 
 void Event_Q::print_eventX(){
@@ -73,4 +72,40 @@ void Event_Q::print_eventX(){
 		}
 		current = current->next;
 	}
+}
+
+int Event_Q::get_next_event_pid(){
+	if(e == NULL)
+		return -1;
+	return e->evt_proc->pid;
+}
+
+event* Event_Q::remove_event(Process* proc){
+	if(e == NULL)
+		return NULL;
+	if(e->evt_proc->pid == proc->pid){
+		//head
+		event *temp = e;
+		e = e->next;
+		return temp;
+	}
+
+	event *current = e;
+	while(current->next != NULL && current->next->evt_proc->pid != proc->pid)
+		current = current->next;
+	if(current->next == NULL)
+		return NULL;
+	event *temp = current->next;
+	current->next = current->next->next;
+	return temp;
+
+}
+
+event* Event_Q::get_next_proc_event(Process* proc){
+	if(e == NULL)
+		return NULL;
+	event * current = e;
+	while(current->evt_proc->pid != proc->pid)
+		current = current->next;
+	return current;
 }

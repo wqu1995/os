@@ -37,6 +37,7 @@ void init_process(string s){
 void simulation(){
 	printf("ShowEventQ:  ");
 	evt_q->print_event();
+	printf("\n");
 	event *evt;
 	bool call_sch;
 	Process* current_running_proc = NULL;
@@ -49,7 +50,9 @@ void simulation(){
 			case TRANS_TO_READY:{
 				proc->state_ts = current_time;
 				if(proc->current_state == STATE_PREEMPTED){
-					printf("%d %d %d: RUNNG -> READY cb=%d rem=%d prio=%d\n",current_time, proc->pid, prev_time, proc->current_cpu_time, proc->cpu_rem, proc->d_prio);
+					printf("%d %d %d: RUNNG -> READY  cb=%d rem=%d prio=%d\n",current_time, proc->pid, prev_time, proc->current_cpu_time, proc->cpu_rem, proc->d_prio);
+					//proc->d_prio--;
+
 				}
 				else{
 					if(proc->current_state == STATE_CREATED)
@@ -57,6 +60,8 @@ void simulation(){
 					else if(proc->current_state == STATE_BLOCKED){
 						proc->io_until = 0;
 						printf("%d %d %d: BLOCK -> READY\n",current_time, proc->pid, prev_time);
+						//proc->d_prio = proc->s_prio-1;
+
 					}
 
 					if(longest_io_proc != NULL && longest_io_proc->pid == proc->pid){
@@ -71,7 +76,7 @@ void simulation(){
 					}
 				}
 				//proc->current_state = STATE_READY;
-				sch->add_process(proc);
+				sch->add_process(proc, current_running_proc, evt_q);
 				call_sch = true;
 
 				break;
@@ -88,6 +93,8 @@ void simulation(){
 				else{
 					cb = min(proc->cpu_rem, myrandom(proc->cpu_burst));
 					proc->current_cpu_time = cb;
+					cpu_in_use+=cb;
+
 				}
 				printf("%d %d %d: READY -> RUNNG cb=%d rem=%d prio=%d\n",current_time, proc->pid, prev_time, cb, proc->cpu_rem, proc->d_prio);
 				if(cb <=sch->quantum){
@@ -109,7 +116,6 @@ void simulation(){
 					printf("\n");
 				}
 
-				cpu_in_use+=cb;
 				proc->cpu_rem -= cb;
 				
 				break;
@@ -153,6 +159,8 @@ void simulation(){
 				if(current_running_proc->pid == proc->pid)
 					current_running_proc = NULL;
 				proc->current_cpu_time -=prev_time;
+				//cpu_in_use-=proc->current_cpu_time;
+
 /*				if(proc->d_prio == -1)
 					proc->d_prio = proc->s_prio-1;
 				else
@@ -214,8 +222,8 @@ void print_result(){
 }
 
 int main(int argc, char const *argv[]){
-	int quantum = 5;
-	max_prio = 3;
+	int quantum = 15;
+	max_prio = 77;
 	init_rands("rfile");
 	evt_q = new Event_Q();
 	sch = new PRScheduler(quantum, max_prio);
