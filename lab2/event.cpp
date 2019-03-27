@@ -3,6 +3,8 @@
 using namespace EVT;
 using namespace EVTQ;
 
+/***********
+definition of an event*/
 event::event(trans_state_t ts, Process* proc, int time){
 	transition = ts;
 	evt_proc = proc;
@@ -14,11 +16,14 @@ Event_Q::Event_Q(){
 	e = NULL;
 }
 
+/************
+put event in the correct position of the queue*/
 void Event_Q::put_event(trans_state_t ts, Process* proc, int time){
 	event *temp = new event(ts, proc, time);
 
 	event *current = e;
 	if(current == NULL || current->evt_time > time){
+		//head
 		temp->next = current;
 		e = temp;
 		return;
@@ -32,6 +37,8 @@ void Event_Q::put_event(trans_state_t ts, Process* proc, int time){
 	}
 }
 
+/****************
+return the next event */
 event* Event_Q::get_event(){
 	if(e == NULL)
 		return NULL;
@@ -39,11 +46,17 @@ event* Event_Q::get_event(){
 	e = e->next;
 	return res;
 }
+
+/*************
+return the next event time*/
 int Event_Q::get_next_event_time(){
 	if(e == NULL)
 		return -1;
 	return e->evt_time;
 }
+
+/****************
+print event from the queue*/
 void Event_Q::print_event(){
 	event *current = e;
 	while(current != NULL){
@@ -52,6 +65,8 @@ void Event_Q::print_event(){
 	}
 }
 
+/****************
+print event from the queue*/
 void Event_Q::print_eventX(){
 	event *current = e;
 	while(current != NULL){
@@ -74,12 +89,16 @@ void Event_Q::print_eventX(){
 	}
 }
 
+/****************
+return next event pid*/
 int Event_Q::get_next_event_pid(){
 	if(e == NULL)
 		return -1;
 	return e->evt_proc->pid;
 }
 
+/*******************
+remove proc's next event from the queue*/
 event* Event_Q::remove_event(Process* proc){
 	if(e == NULL)
 		return NULL;
@@ -101,6 +120,9 @@ event* Event_Q::remove_event(Process* proc){
 
 }
 
+
+/******************
+return the next event that belongs to proc*/
 event* Event_Q::get_next_proc_event(Process* proc){
 	if(e == NULL)
 		return NULL;

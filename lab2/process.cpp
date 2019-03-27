@@ -1,6 +1,8 @@
 #include "process.h"
 using namespace PS;
 
+/***********************
+definition of a process*/
 Process::Process(int i, int at, int tc, int cb, int ib){
 	pid = i;
 	arr_time = at;

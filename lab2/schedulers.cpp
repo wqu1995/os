@@ -1,6 +1,11 @@
 #include "schedulers.h"
 using namespace SCH;
 
+sorted_q::sorted_q(Process *ps){
+	proc = ps;
+	next = NULL;
+}
+
 FScheduler::FScheduler(){
 	name = "FCFS";
 	quantum = 10000;
@@ -10,6 +15,7 @@ void FScheduler::add_process(Process *proc, Process *current_running_proc, Event
 	run_q.push_back(proc);
 }
 Process* FScheduler::get_next_process(){
+	//printf("in x\n");
 	if(run_q.size()==0)
 		return NULL;
 	Process *res = run_q.front();
@@ -32,7 +38,7 @@ void LScheduler::add_process(Process *proc, Process *current_running_proc, Event
 	proc->current_state = STATE_READY;
 	run_q.push_front(proc);
 }
-Process* LScheduler::get_next_process(){
+/*Process* LScheduler::get_next_process(){
 	if(run_q.size()==0)
 		return NULL;
 	Process *res = run_q.front();
@@ -45,11 +51,8 @@ void LScheduler::print_q(){
 		printf("%d:%d  ",proc->pid, proc->state_ts);
 	}
 	printf("\n");
-}
-sorted_q::sorted_q(Process *ps){
-	proc = ps;
-	next = NULL;
-}
+}*/
+
 
 SRScheduler::SRScheduler(){
 	name = "SRTF";
@@ -101,7 +104,7 @@ void RRScheduler::add_process(Process *proc, Process *current_running_proc, Even
 	proc->current_state = STATE_READY;
 	run_q.push_back(proc);
 }
-Process* RRScheduler::get_next_process(){
+/*Process* RRScheduler::get_next_process(){
 	if(run_q.size()==0)
 		return NULL;
 	Process *res = run_q.front();
@@ -114,8 +117,10 @@ void RRScheduler::print_q(){
 		printf("%d:%d  ",proc->pid, proc->state_ts);
 	}
 	printf("\n");
+}*/
+PRScheduler::PRScheduler(){
+	name = "PRIO ";
 }
-
 PRScheduler::PRScheduler(int q, int maxp){
 	quantum = q;
 	maxprio = maxp;
@@ -127,7 +132,6 @@ PRScheduler::PRScheduler(int q, int maxp){
 		expired_q[i] = NULL;
 	}
 }
-
 void PRScheduler::add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q){
 	if(proc->current_state == STATE_PREEMPTED)
 		proc->d_prio--;
@@ -161,7 +165,6 @@ void PRScheduler::add_process(Process *proc, Process *current_running_proc, Even
 
 	current->next = temp;
 }
-
 Process* PRScheduler::get_next_process(){
 	Process *res = NULL;
 	for(int i = maxprio-1; i>=0; i--){
@@ -184,7 +187,6 @@ Process* PRScheduler::get_next_process(){
 	}
 	return NULL;
 }
-
 void PRScheduler::print_q(){
 	printf("{ ");
 	for(int i = maxprio-1; i>=0; i--){
@@ -220,15 +222,16 @@ void PRScheduler::print_q(){
 }
 
 PPRScheduler::PPRScheduler(int q, int maxp){
+	//PRScheduler(q, maxp);
 	quantum = q;
 	maxprio = maxp;
-	name = "PREPRIO "+to_string(quantum);
 	active_q = new sorted_q*[maxprio];
 	expired_q = new sorted_q*[maxprio];
 	for(int i = 0; i<maxprio; i++){
 		active_q[i] = NULL;
 		expired_q[i] = NULL;
 	}
+	name = "PREPRIO "+to_string(quantum);
 }
 
 void PPRScheduler::add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q){
@@ -303,7 +306,7 @@ void PPRScheduler::add_process(Process *proc, Process *current_running_proc, Eve
 	current->next = temp;
 }
 
-Process* PPRScheduler::get_next_process(){
+/*Process* PPRScheduler::get_next_process(){
 	Process *res = NULL;
 	for(int i = maxprio-1; i>=0; i--){
 		if(active_q[i] != NULL){
@@ -358,4 +361,4 @@ void PPRScheduler::print_q(){
 	}
 	printf("} :");
 	printf("\n");
-}
+}*/

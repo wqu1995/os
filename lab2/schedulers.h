@@ -13,6 +13,9 @@ using namespace EVTQ;
 
 
 namespace SCH{
+
+	/********************
+	queue implemented as a linked list*/
 	class sorted_q{
 	public:
 		sorted_q(Process* proc);
@@ -20,6 +23,7 @@ namespace SCH{
 		sorted_q *next;
 	};
 
+	//base class
 	class Scheduler{
 	public:
 		int quantum;
@@ -29,24 +33,28 @@ namespace SCH{
 		virtual void print_q()=0;
 	};
 
+	//first come first serve
 	class FScheduler: public Scheduler{
+	protected:
 		deque<Process*> run_q;
 	public:
 		FScheduler();
-		void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
+		virtual void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
 		Process* get_next_process();
 		void print_q();
 	};
 
-	class LScheduler: public Scheduler{
-		deque<Process*> run_q;
+	//last come first serve
+	class LScheduler: public FScheduler{
+		//deque<Process*> run_q;
 	public:
 		LScheduler();
 		void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
-		Process* get_next_process();
-		void print_q();
+		//Process* get_next_process();
+	//	void print_q();
 	};
 
+	//shortest remaining time first 
 	class SRScheduler: public Scheduler{
 		sorted_q* run_q;
 		int count;
@@ -57,35 +65,37 @@ namespace SCH{
 		void print_q();
 	};
 
-	class RRScheduler: public Scheduler{
-		deque<Process*> run_q;
+	//round robin
+	class RRScheduler: public FScheduler{
+		//deque<Process*> run_q;
 	public:
 		RRScheduler(int q);
 		void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
-		Process* get_next_process();
-		void print_q();
+		//Process* get_next_process();
+		//void print_q();
 	};
 
+	//Priority Scheduler
 	class PRScheduler: public Scheduler{
+	protected:
 		sorted_q* *active_q;
 		sorted_q* *expired_q;
 		int maxprio;
 	public:
+		PRScheduler();
 		PRScheduler(int q, int maxp);
-		void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
+		virtual void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
 		Process* get_next_process();
 		void print_q();
 	};
 
-	class PPRScheduler: public Scheduler{
-		sorted_q* *active_q;
-		sorted_q* *expired_q;
-		int maxprio;
+	//preemptive Priority Scheduler
+	class PPRScheduler: public PRScheduler{
 	public:
 		PPRScheduler(int q, int maxp);
 		void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
-		Process* get_next_process();
-		void print_q();
+		//Process* get_next_process();
+		//void print_q();
 	};
 }
 #endif

@@ -20,7 +20,8 @@ int proc_count=0;
 double cpu_in_use = 0;
 double io_in_use = 0;
 
-
+/******************
+Function for initialize the process from the source file*/
 void init_process(char* s){
 	ifstream input(s);
 	if(!input){
@@ -37,6 +38,8 @@ void init_process(char* s){
 //	evt_q->print_event();
 }
 
+/****************
+Simulates DES*/
 void simulation(){
 	//printf("ShowEventQ:  ");
 	//evt_q->print_event();
@@ -45,10 +48,12 @@ void simulation(){
 	bool call_sch;
 	Process* current_running_proc = NULL;
 	Process *longest_io_proc = NULL;
+
 	while((evt = evt_q->get_event())){
-		Process *proc = evt->evt_proc;
-		current_time = evt->evt_time;
-		prev_time = current_time-proc->state_ts;
+		//Start getting events from the event queue
+		Process *proc = evt->evt_proc; //current event process
+		current_time = evt->evt_time;	//current time
+		prev_time = current_time-proc->state_ts;	//how long did the process stay in the previous stage.
 		switch(evt->transition){
 			case TRANS_TO_READY:{
 				proc->state_ts = current_time;
@@ -67,6 +72,7 @@ void simulation(){
 
 					}
 					if(longest_io_proc != NULL && longest_io_proc->pid == proc->pid){
+						//find the process with longest io time
 						longest_io_proc = NULL;
 						int temp_long = 0;
 						for(Process *procx : proc_list){
@@ -78,7 +84,7 @@ void simulation(){
 					}
 				}
 
-				//proc->current_state = STATE_READY;
+				//add process to the scheduler
 				sch->add_process(proc, current_running_proc, evt_q);
 				call_sch = true;
 
@@ -90,18 +96,23 @@ void simulation(){
 				proc->state_ts = current_time;
 				proc->cpu_wait +=prev_time;
 				int cb;
+
 				if(proc->current_cpu_time != 0){
+					//process comes from a preempt state, thus it has not finish its cpu burst yet
 					cb = proc->current_cpu_time;
 				}
 				else{
+					//process comes from a create or block state, so we generate a new cpu burst
 					cb = min(proc->cpu_rem, myrandom(proc->cpu_burst));
 					proc->current_cpu_time = cb;
+					//cpu_in_use tracks the total time that processor is in use
 					cpu_in_use+=cb;
 
 				}
 				//printf("%d %d %d: READY -> RUNNG cb=%d rem=%d prio=%d\n",current_time, proc->pid, prev_time, cb, proc->cpu_rem, proc->d_prio);
 				if(cb <=sch->quantum){
-					//not pre
+					//cpu burst is less than quantum, so the process is not scheduled to preemption.
+
 					//printf("  AddEvent(%d:%d:%s):  ", current_time+cb, proc->pid, "BLOCK");
 					//evt_q->print_eventX();
 						evt_q->put_event(TRANS_TO_BLOCK, proc, current_time+cb);
@@ -110,7 +121,9 @@ void simulation(){
 					//printf("\n");
 				}
 				else{
+					//cpu burst exceeds the amount of quantum each process allows. 
 					cb = sch->quantum;
+
 					//printf("  AddEvent(%d:%d:%s):  ", current_time+cb, proc->pid, "PREEMPT");
 					//evt_q->print_eventX();
 						evt_q->put_event(TRANS_TO_PREEMPT, proc, current_time+cb);
@@ -124,11 +137,13 @@ void simulation(){
 				break;
 			}
 			case TRANS_TO_BLOCK:{
-				if(current_running_proc->pid == proc->pid)
+				if(current_running_proc->pid == proc->pid) 
 					current_running_proc = NULL;
+
 				proc->state_ts = current_time;
 				proc->current_cpu_time = 0;
 				if(proc->cpu_rem == 0){
+					//process finishes its job
 					proc->current_state = STATE_FINISHED;
 					//printf("%d %d %d: Done\n", current_time, proc->pid, prev_time);
 				}
@@ -137,6 +152,7 @@ void simulation(){
 					int ib = myrandom(proc->io_burst);
 					proc->io_wait+= ib;
 					proc->io_until = current_time+ib;
+					//keep track how long is the io in use
 					if(longest_io_proc == NULL){
 						io_in_use+=ib;
 						longest_io_proc = proc;
@@ -160,14 +176,9 @@ void simulation(){
 			case TRANS_TO_PREEMPT:{
 				if(current_running_proc->pid == proc->pid)
 					current_running_proc = NULL;
+				//if process is preempted in middle of its running state, it's total cpu time should be updated
 				proc->current_cpu_time -=prev_time;
-				//cpu_in_use-=proc->current_cpu_time;
 
-/*				if(proc->d_prio == -1)
-					proc->d_prio = proc->s_prio-1;
-				else
-					proc->d_prio--;*/
-				//proc->state_ts = current_time;
 				proc->current_state = STATE_PREEMPTED;
 				evt_q->put_event(TRANS_TO_READY, proc, current_time);
 			}
@@ -266,29 +277,6 @@ int main(int argc, char *argv[]){
 		optind++;
 	}
 
-
-
-	// printf("%s\n", s_val);
-	// printf("%s\n", source);
-	// printf("%s\n", rfile);
-
-
-/*	char *val = strtok(s_val, ":");
-	char s_type;*/
-/*	if((val = strtok(NULL, ":")) != NULL){
-		//max_prio = atoi(val);
-		//contains maxp
-		printf("in here\n");
-		sscanf(s_val, "%c%d:%d", &s_type, &quantum, &max_prio);
-	}
-	else{
-		sscanf(s_val, "%c%d:%*d", &s_type, &quantum);
-	}
-	printf("%s\n", s_val);
-	printf("type: %c\n", s_type);
-	printf("quantum: %d\n", quantum);
-	printf("max_prio: %d\n", max_prio);*/
-
 	char s_type;
 	char *pos;
 	sscanf(s_val, "%c%*d%*d", &s_type);
@@ -331,59 +319,14 @@ int main(int argc, char *argv[]){
 			exit(EXIT_FAILURE);
 	}
 
-/*	char *val =strtok(s_val, ":");
-	if((val = strtok(NULL, ":")) !=NULL){
-		printf("%s\n", s_val);
-		sscanf(s_val, "%c%d:%d", &x, &y, &z);
-	}*/
-/*	if((pos = strchr(s_val, ':')) != NULL){
-		sscanf(s_val, "%c%d:%d", &s_type, &quantum, &max_prio);
-	}
-	else{
-		sscanf(s_val, "%c%d:%*d", &s_type, &quantum);
-		max_prio = 4;
-	}
-
-	//sscanf(s_val, "%c%d:%d", &x, &y, &z);
-	printf("%c\n", s_type);
-	printf("%d\n", quantum);
-	printf("%d\n", max_prio);*/
-
-	//printf("%c\n", s_val[0]);
-
-/*	int s_type = s_val[0];
-	switch(s_type){
-		case 'F':
-			sch = new FScheduler();
-			break;
-		case 'L':
-			sch = new LScheduler();
-			break;
-		case 'S':
-			sch = new SRScheduler();
-			break;
-		case 'R':{
-
-		}
-			
-	}
-	printf("%c\n", s_type);
-	printf("%s\n", s_val+1);
-
-	char *val = strtok(s_val, ":");
-	if((val = strtok(NULL, ":")) != NULL){
-		max_prio = atoi(val);
-	}*/
-
-
-
-
-	// sch = new PRScheduler(quantum, max_prio);
 	init_rands(rfile);
 	evt_q = new Event_Q();
 	init_process(source);
 	simulation();
 	print_result();
+
+	for(Process* proc : proc_list)
+		delete proc;
+	
 	return 0;
-	//	}
 }
