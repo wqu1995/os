@@ -4,8 +4,8 @@ int rand_count;
 int *myrands;
 int max_prio = 4;
 int ofs = 0;
-void init_rands(string s){
-	ifstream input(s.c_str());
+void init_rands(char *s){
+	ifstream input(s);
 	if(!input){
 		printf("failed to open random file\n");
 		exit(EXIT_FAILURE);

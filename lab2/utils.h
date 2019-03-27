@@ -10,6 +10,6 @@ using std::ifstream;
 extern int *myrands;
 extern int max_prio;
 
-void init_rands(string s);
+void init_rands(char *s);
 int myrandom(int burst);
 #endif

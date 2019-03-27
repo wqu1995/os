@@ -1,7 +1,7 @@
 #ifndef EVENT
 #define EVENT
 #include "types.h"
-#include "Process.h"
+#include "process.h"
 
 using namespace PS;
 

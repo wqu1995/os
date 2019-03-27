@@ -171,7 +171,7 @@ Process* PRScheduler::get_next_process(){
 			return res;
 		}
 	}
-	printf("switched queues\n");
+//	printf("switched queues\n");
 	sorted_q** temp = expired_q;
 	expired_q = active_q;
 	active_q = temp;
@@ -240,17 +240,16 @@ void PPRScheduler::add_process(Process *proc, Process *current_running_proc, Eve
 	if(current_running_proc != NULL && (proc->current_state == STATE_CREATED || proc->current_state == STATE_BLOCKED)){
 		event *next_evt = evt_q->get_next_proc_event(current_running_proc);
 		if(next_evt != NULL){
-			//printf("p1: %d, p2L %d\n",proc->d_prio, current_running_proc->d_prio );
-			printf("---> PRIO preemption %d by %d ? %d TS=%d now=%d) --> ",current_running_proc->pid, proc->pid, current_running_proc->d_prio < proc->d_prio, next_evt->evt_time, proc->state_ts );
+			//printf("---> PRIO preemption %d by %d ? %d TS=%d now=%d) --> ",current_running_proc->pid, proc->pid, current_running_proc->d_prio < proc->d_prio, next_evt->evt_time, proc->state_ts );
 			if(current_running_proc->d_prio < proc->d_prio && proc->state_ts != next_evt->evt_time && proc->pid != next_evt->evt_proc->pid){
-				printf("YES\n");
+			//	printf("YES\n");
 				//preempt
-				printf("RemoveEvent(%d):  ", current_running_proc->pid);
-				evt_q->print_event();
+			//	printf("RemoveEvent(%d):  ", current_running_proc->pid);
+			//	evt_q->print_event();
 					event *next_evt = evt_q->remove_event(current_running_proc);
-				printf("==>  ");
-				evt_q->print_eventX();
-				printf("\n");
+			//	printf("==>  ");
+			//	evt_q->print_eventX();
+			//	printf("\n");
 
 				if(next_evt != NULL){
 					current_running_proc->cpu_rem+=next_evt->evt_time - proc->state_ts;
@@ -258,16 +257,16 @@ void PPRScheduler::add_process(Process *proc, Process *current_running_proc, Eve
 				}
 
 
-				printf("  AddEvent(%d:%d:%s):  ", proc->state_ts, current_running_proc->pid, "PREEMPT");
-				evt_q->print_eventX();
+			//	printf("  AddEvent(%d:%d:%s):  ", proc->state_ts, current_running_proc->pid, "PREEMPT");
+			//	evt_q->print_eventX();
 					evt_q->put_event(TRANS_TO_PREEMPT, current_running_proc, proc->state_ts);
-				printf("==>  ");
-				evt_q->print_eventX();
-				printf("\n");
+			//	printf("==>  ");
+			//	evt_q->print_eventX();
+			//	printf("\n");
 				//current_running_proc = NULL;
 			}
 			else{
-				printf("NO\n");
+			//	printf("NO\n");
 			}
 
 		}
@@ -313,7 +312,7 @@ Process* PPRScheduler::get_next_process(){
 			return res;
 		}
 	}
-	printf("switched queues\n");
+	//printf("switched queues\n");
 	sorted_q** temp = expired_q;
 	expired_q = active_q;
 	active_q = temp;
