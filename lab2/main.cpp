@@ -256,6 +256,10 @@ int main(int argc, char *argv[]){
 				break;
 		}
 	}
+	if(s_val == NULL){
+		printf("usage: <program> [-s<schedspec>] inputfile randfile\n");
+		exit(EXIT_FAILURE);
+	}
 
 	char *source;
 	char *rfile;
@@ -327,6 +331,5 @@ int main(int argc, char *argv[]){
 
 	for(Process* proc : proc_list)
 		delete proc;
-	
 	return 0;
 }

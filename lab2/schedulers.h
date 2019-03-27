@@ -46,12 +46,9 @@ namespace SCH{
 
 	//last come first serve
 	class LScheduler: public FScheduler{
-		//deque<Process*> run_q;
 	public:
 		LScheduler();
 		void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
-		//Process* get_next_process();
-	//	void print_q();
 	};
 
 	//shortest remaining time first 
@@ -67,12 +64,9 @@ namespace SCH{
 
 	//round robin
 	class RRScheduler: public FScheduler{
-		//deque<Process*> run_q;
 	public:
 		RRScheduler(int q);
 		void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
-		//Process* get_next_process();
-		//void print_q();
 	};
 
 	//Priority Scheduler
@@ -94,8 +88,6 @@ namespace SCH{
 	public:
 		PPRScheduler(int q, int maxp);
 		void add_process(Process *proc, Process *current_running_proc, Event_Q *evt_q);
-		//Process* get_next_process();
-		//void print_q();
 	};
 }
 #endif

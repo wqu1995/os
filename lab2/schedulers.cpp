@@ -38,21 +38,6 @@ void LScheduler::add_process(Process *proc, Process *current_running_proc, Event
 	proc->current_state = STATE_READY;
 	run_q.push_front(proc);
 }
-/*Process* LScheduler::get_next_process(){
-	if(run_q.size()==0)
-		return NULL;
-	Process *res = run_q.front();
-	run_q.pop_front();
-	return res;
-}
-void LScheduler::print_q(){
-	printf("SCHED (%lu):  ", run_q.size());
-	for(Process* proc:run_q){
-		printf("%d:%d  ",proc->pid, proc->state_ts);
-	}
-	printf("\n");
-}*/
-
 
 SRScheduler::SRScheduler(){
 	name = "SRTF";
@@ -104,20 +89,7 @@ void RRScheduler::add_process(Process *proc, Process *current_running_proc, Even
 	proc->current_state = STATE_READY;
 	run_q.push_back(proc);
 }
-/*Process* RRScheduler::get_next_process(){
-	if(run_q.size()==0)
-		return NULL;
-	Process *res = run_q.front();
-	run_q.pop_front();
-	return res;
-}
-void RRScheduler::print_q(){
-	printf("SCHED (%lu):  ", run_q.size());
-	for(Process* proc:run_q){
-		printf("%d:%d  ",proc->pid, proc->state_ts);
-	}
-	printf("\n");
-}*/
+
 PRScheduler::PRScheduler(){
 	name = "PRIO ";
 }
@@ -305,60 +277,3 @@ void PPRScheduler::add_process(Process *proc, Process *current_running_proc, Eve
 
 	current->next = temp;
 }
-
-/*Process* PPRScheduler::get_next_process(){
-	Process *res = NULL;
-	for(int i = maxprio-1; i>=0; i--){
-		if(active_q[i] != NULL){
-			res = active_q[i]->proc;
-			active_q[i] = active_q[i]->next;
-			return res;
-		}
-	}
-	//printf("switched queues\n");
-	sorted_q** temp = expired_q;
-	expired_q = active_q;
-	active_q = temp;
-	for(int i = maxprio-1; i>=0; i--){
-		if(active_q[i] != NULL){
-			res = active_q[i]->proc;
-			active_q[i] = active_q[i]->next;
-			return res;
-		}
-	}
-	return NULL;
-}
-
-void PPRScheduler::print_q(){
-	printf("{ ");
-	for(int i = maxprio-1; i>=0; i--){
-		printf("[");
-		sorted_q *current = active_q[i];
-		if(current != NULL){
-			while(current->next!= NULL){
-				printf("%d,", current->proc->pid);
-				current = current->next;
-			}
-			printf("%d", current->proc->pid);
-		}
-		printf("]");
-
-	}
-	printf("} : { ");
-	for(int i = maxprio-1; i>=0; i--){
-		printf("[");
-		sorted_q *current = expired_q[i];
-		if(current != NULL){
-			while(current->next!= NULL){
-				printf("%d,", current->proc->pid);
-				current = current->next;
-				
-			}
-			printf("%d", current->proc->pid);
-		}
-		printf("]");
-
-	}
-	printf("} :");
-	printf("\n");
-}*/
