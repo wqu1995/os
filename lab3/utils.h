@@ -43,11 +43,13 @@ typedef struct{
 	int fid;
 	int pid;
 	int vpage;
+	unsigned age;
 }frame_t;
 
 extern vector<frame_t*> frame_table;
 extern int *myrands;
 extern int max_prio;
+extern int instr_num;
 
 namespace PARSER{
 	class Parser{

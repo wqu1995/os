@@ -30,5 +30,28 @@ namespace PG{
 		CPager();
 		frame_t* select_victim_frame();
 	};
+
+	class EPager: public Pager{
+		int counter;
+		int ins;
+	public:
+		EPager();
+		frame_t* select_victim_frame();
+	};
+
+	class APager: public Pager{
+		int counter;
+	public:
+		APager();
+		frame_t* select_victim_frame();
+	};
+
+	class WPager: public Pager{
+		int counter;
+		int tau;
+	public:
+		WPager();
+		frame_t* select_victim_frame();
+	};
 }
 #endif

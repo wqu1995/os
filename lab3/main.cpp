@@ -13,14 +13,11 @@ using std::vector;
 using std::deque;
 
 Parser *parser;
-
 deque<int> frame_free_list;
-
 Pager *pager;
-
 int proc_num;
-int instr_num = 0;
 int frame_number;
+char pager_type = 'w';
 
 void exit_proc(Process* proc){
 	for(int i = 0; i< PAGE_NUM; i++){
@@ -32,6 +29,7 @@ void exit_proc(Process* proc){
 			temp->vaild = 0;
 			temp->pid = -1;
 			temp->vpage = -1;
+			temp->age = 0;
 			frame_free_list.push_back(proc->page_table[i].f_index);
 
 
@@ -92,6 +90,7 @@ void init_frames(){
 		temp->fid = i;
 		temp->pid = -1;
 		temp->vpage = -1;
+		temp->age = 0;
 		frame_table.push_back(temp);
 		frame_free_list.push_back(i);
 	}
@@ -169,6 +168,10 @@ int pgfault_handler(Process* cur_proc, int vpage){
 		cur_proc->page_table[vpage].f_index = newframe->fid;
 		newframe->pid = cur_proc->pid;
 		newframe->vpage = vpage;
+		if(pager_type == 'a')
+			newframe->age = 0;
+		else if(pager_type = 'w')
+			newframe->age = instr_num;
 		printf(" MAP %d\n", cur_proc->page_table[vpage].f_index);
 		return 1;
 	}
@@ -194,7 +197,7 @@ void simulation(){
 	int vpage;
 	Process *cur_proc = NULL;
 	while(get_next_instruction(&operation, &vpage)){
-		printf("%d: ==> %c %d\n",instr_num-1, operation, vpage);
+		printf("%d: ==> %c %d\n",instr_num, operation, vpage);
 		switch(operation){
 			case 'c':{
 				cur_proc = proc_list[vpage];
@@ -251,7 +254,7 @@ void simulation(){
 int main(int argc, char *argv[]){
 	parser = new Parser(argv[1]);
 	frame_number = atoi(argv[2]);
-	pager = new CPager();
+	pager = new WPager();
 
 	init_rands(argv[3]);
 	init_process();
