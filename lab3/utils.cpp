@@ -5,7 +5,7 @@ int rand_count;
 int *myrands;
 int ofs = 0;
 vector<frame_t*> frame_table;
-int instr_num = -1;
+unsigned long instr_num = 0;
 void init_rands(char *s){
 	ifstream input(s);
 	if(!input){

@@ -2,6 +2,7 @@
 using namespace PS;
 
 Process** proc_list;
+proc_stats* pstats;
 
 Process::Process(int p, int vma_n){
 	pid = p;

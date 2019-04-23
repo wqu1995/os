@@ -1,5 +1,5 @@
 CC := g++
-CFLAGS := -std=c++11
+CFLAGS := -O3 -std=c++11
 SRC = main.cpp utils.cpp process.cpp page.cpp
 EXEC := test
 

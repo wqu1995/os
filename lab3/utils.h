@@ -49,7 +49,7 @@ typedef struct{
 extern vector<frame_t*> frame_table;
 extern int *myrands;
 extern int max_prio;
-extern int instr_num;
+extern unsigned long instr_num;
 
 namespace PARSER{
 	class Parser{

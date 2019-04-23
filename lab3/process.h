@@ -15,6 +15,19 @@ namespace PS{
 	};
 }
 
+
+typedef struct {
+	unsigned long umaps;
+	unsigned long maps;
+	unsigned long ins;
+	unsigned long outs;
+	unsigned long fins;
+	unsigned long fouts;
+	unsigned long zeros;
+	unsigned long segv;
+	unsigned long segprot;
+}proc_stats;
 extern PS::Process** proc_list;
+extern proc_stats* pstats;
 
 #endif
