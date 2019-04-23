@@ -44,12 +44,26 @@ typedef struct{
 	int pid;
 	int vpage;
 	unsigned age;
+	unsigned time;
 }frame_t;
+
+typedef struct {
+	unsigned O : 1;
+	unsigned P : 1;
+	unsigned F : 1;
+	unsigned S : 1;
+	unsigned y : 1;
+	unsigned f : 1;
+	unsigned a : 1;
+	unsigned etc : 21;
+}__attribute__((packed))option_t;
 
 extern vector<frame_t*> frame_table;
 extern int *myrands;
 extern int max_prio;
 extern unsigned long instr_num;
+extern option_t* ops;
+
 
 namespace PARSER{
 	class Parser{

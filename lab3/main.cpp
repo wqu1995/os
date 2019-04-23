@@ -1,13 +1,15 @@
 #include "utils.h"
 #include "process.h"
 #include "page.h"
-#include <iostream>
 #include <vector>
 #include <queue>
+#include <ctype.h>
+#include <unistd.h>
+#include <string.h>
+
 using namespace PARSER;
 using namespace PS;
 using namespace PG;
-using std::cout;
 using std::stoi;
 using std::vector;
 using std::deque;
@@ -16,8 +18,7 @@ Parser *parser;
 deque<int> frame_free_list;
 Pager *pager;
 int proc_num;
-int frame_number;
-char pager_type = 'w';
+int frame_number = 0;
 unsigned long c_switch = 0;
 unsigned long c_exit = 0;
 unsigned long rw_ins = 0;
@@ -28,10 +29,10 @@ void exit_proc(Process* proc){
 	for(int i = 0; i< PAGE_NUM; i++){
 		if(proc->page_table[i].vaild){
 			frame_t* temp = frame_table[proc->page_table[i].f_index];
-			printf(" UNMAP %d:%d\n", temp->pid, temp->vpage);
+			if(ops->O) printf(" UNMAP %d:%d\n", temp->pid, temp->vpage);
 			pstats[temp->pid].umaps++;
 			if(proc->page_table[i].filemapped && proc->page_table[i].modified){
-				printf(" FOUT \n");
+				if(ops->O) printf(" FOUT \n");
 				pstats[temp->pid].fouts++;
 			}
 			temp->vaild = 0;
@@ -180,17 +181,17 @@ frame_t* get_frame(){
 	frame_t *frame = get_frame_from_list();
 	if(frame == NULL){
 		frame = pager->select_victim_frame();
-		printf(" UNMAP %d:%d\n",frame->pid, frame->vpage);
+		if(ops->O) printf(" UNMAP %d:%d\n",frame->pid, frame->vpage);
 		pstats[frame->pid].umaps++;
 
 		proc_list[frame->pid]->page_table[frame->vpage].vaild = 0;
 		if(proc_list[frame->pid]->page_table[frame->vpage].modified){
 			if(proc_list[frame->pid]->page_table[frame->vpage].filemapped){
-				printf(" FOUT\n");
+				if(ops->O) printf(" FOUT\n");
 				pstats[frame->pid].fouts++;
 			}
 			else{
-				printf(" OUT\n");
+				if(ops->O) printf(" OUT\n");
 				pstats[frame->pid].outs++;
 				proc_list[frame->pid]->page_table[frame->vpage].pagedout = 1;
 			}
@@ -211,30 +212,28 @@ int pgfault_handler(Process* cur_proc, int vpage){
 
 		frame_t *newframe = get_frame();
 		if(cur_proc->page_table[vpage].pagedout){
-			printf(" IN\n");
+			if(ops->O) printf(" IN\n");
 			pstats[cur_proc->pid].ins++;
 		}
 		else if(cur_proc->page_table[vpage].filemapped){
-			printf(" FIN\n");
+			if(ops->O) printf(" FIN\n");
 			pstats[cur_proc->pid].fins++;
 		}
 		else {
-			printf(" ZERO\n");
+			if(ops->O) printf(" ZERO\n");
 			pstats[cur_proc->pid].zeros++;
 		}
 		cur_proc->page_table[vpage].f_index = newframe->fid;
 		newframe->pid = cur_proc->pid;
 		newframe->vpage = vpage;
-		if(pager_type == 'a')
-			newframe->age = 0;
-		else if(pager_type = 'w')
-			newframe->age = instr_num;
-		printf(" MAP %d\n", cur_proc->page_table[vpage].f_index);
+		newframe->age = 0;
+		newframe->time = instr_num;
+		if(ops->O) printf(" MAP %d\n", cur_proc->page_table[vpage].f_index);
 		pstats[cur_proc->pid].maps++;
 		return 1;
 	}
 	else{
-		printf(" SEGV\n");
+		if(ops->O) printf(" SEGV\n");
 		pstats[cur_proc->pid].segv++;
 		return -1;
 	}
@@ -256,7 +255,7 @@ void simulation(){
 	int vpage;
 	Process *cur_proc = NULL;
 	while(get_next_instruction(&operation, &vpage)){
-		printf("%lu: ==> %c %d\n",instr_num, operation, vpage);
+		if(ops->O) printf("%lu: ==> %c %d\n",instr_num, operation, vpage);
 		switch(operation){
 			case 'c':{
 				c_switch++;
@@ -272,8 +271,8 @@ void simulation(){
 				}
 				pte->vaild = 1;
 				pte->reference = 1;
-				print_all_page_tables();
-				print_frame_table();
+				if(ops->y)	print_all_page_tables();
+				if(ops->f)	print_frame_table();
 
 				break;
 			}
@@ -287,7 +286,7 @@ void simulation(){
 
 				}
 				if(pte->w_protect){
-					printf(" SEGPROT\n");
+					if(ops->O) printf(" SEGPROT\n");
 					pstats[cur_proc->pid].segprot++;
 					pte->reference = 1;
 					pte->modified = 0;
@@ -296,14 +295,14 @@ void simulation(){
 					pte->reference = 1;
 					pte->modified = 1;
 				}
-				print_all_page_tables();
-				print_frame_table();
+				if(ops->y)	print_all_page_tables();
+				if(ops->f)	print_frame_table();
 
 				break;
 			}
 			case 'e':{
 				c_exit++;
-				printf("EXIT current process %d\n", cur_proc->pid);
+				if(ops->O) printf("EXIT current process %d\n", cur_proc->pid);
 				exit_proc(cur_proc);
 				cur_proc = NULL;
 				break;
@@ -317,26 +316,124 @@ void simulation(){
 }
 
 int main(int argc, char *argv[]){
-	parser = new Parser(argv[1]);
-	frame_number = atoi(argv[2]);
-	pager = new WPager();
+	opterr = 0;
+	int c;
+	char *algo = NULL;
+	char *options = NULL;
 
-	init_rands(argv[3]);
+	while((c=getopt(argc,argv, "a:o:f:"))!=-1){
+		switch(c){
+			case 'a':
+				algo = optarg;
+				break;
+			case 'o':
+				options = optarg;
+				break;
+			case 'f':
+				frame_number = atoi(optarg);
+				break;
+			case '?':
+				printf("usage: ./mmu [-a<algo>] [-o<options>] [–f<num_frames>] inputfile randomfile\n");
+				exit(EXIT_FAILURE);
+				break;
+			default:
+				printf("usage: ./mmu [-a<algo>] [-o<options>] [–f<num_frames>] inputfile randomfile\n");
+				exit(EXIT_FAILURE);
+				break;
+		}
+	}
+	if(!algo || !options || !frame_number || strlen(algo)>1){
+		printf("usage: ./mmu [-a<algo>] [-o<options>] [–f<num_frames>] inputfile randomfile\n");
+		exit(EXIT_FAILURE);
+	}
+
+	char *source;
+	char *rfile;
+
+	if(argv[optind] == NULL){
+		printf("usage: ./mmu [-a<algo>] [-o<options>] [–f<num_frames>] inputfile randomfile\n");
+		exit(EXIT_FAILURE);
+	}
+	else{
+		source = argv[optind];
+		optind++;
+	}
+	if(argv[optind] == NULL){
+		printf("usage: ./mmu [-a<algo>] [-o<options>] [–f<num_frames>] inputfile randomfile\n");
+		exit(EXIT_FAILURE);
+	}
+	else{
+		rfile = argv[optind];
+		optind++;
+	}
+	switch(algo[0]){
+		case 'f':
+			pager = new FPager();
+			break;
+		case 'r':
+			pager = new RPager();
+			break;
+		case 'c':
+			pager = new CPager();
+			break;
+		case 'e':
+			pager = new EPager();
+			break;
+		case 'a':
+			pager = new APager();
+			break;
+		case 'w':
+			pager = new WPager();
+			break;
+		default:
+			printf("supported algos: frceaw\n");
+			exit(EXIT_FAILURE);
+	}
+	ops = (option_t*) calloc(1, sizeof(option_t));
+	int i = 0;
+	while(i != strlen(options)){
+		switch(options[i]){
+			case 'O':
+				ops->O = 1;
+				break;
+			case 'P':
+				ops->P = 1;
+				break;
+			case 'F':
+				ops->F = 1;
+				break;
+			case 'S':
+				ops->S = 1;
+				break;
+			case 'y':
+				ops->y = 1;
+				break;
+			case 'f':
+				ops->f = 1;
+				break;
+			case 'a':
+				ops->a = 1;
+				break;
+			default:
+				printf("supported options: OPFS\n");
+				exit(EXIT_FAILURE);
+		}
+		i++;
+	}
+
+	parser = new Parser(source);
+	init_rands(rfile);
 	init_process();
 	init_frames();
 	simulation();
+	
+	if(ops->P)
+		print_all_page_tables();
+	if(ops->F)
+		print_frame_table();
+	if(ops->S)
+		print_proc_stats();
 
-	print_all_page_tables();
-	print_frame_table();
-	print_proc_stats();
 
-	//pte_t *test = (pte_t*)calloc(1, sizeof(pte_t));
-	//printf("%ld\n", sizeof(pte_t));
-
-/*	string rst = parser->get_next_line();
-	while(!rst.empty()){
-		cout<<rst<<"\n";
-		rst = parser->get_next_line();
-	}*/
 	return 0;
 }

@@ -6,6 +6,8 @@ int *myrands;
 int ofs = 0;
 vector<frame_t*> frame_table;
 unsigned long instr_num = 0;
+option_t* ops;
+
 void init_rands(char *s){
 	ifstream input(s);
 	if(!input){

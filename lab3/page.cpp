@@ -8,7 +8,7 @@ FPager::FPager(){
 frame_t* FPager::select_victim_frame(){
 	if(counter == frame_table.size())
 		counter = 0;
-	printf("ASELECT %d\n", counter);
+	if(ops->a) printf("ASELECT %d\n", counter);
 	frame_t* temp =frame_table[counter++];
 	return temp;
 }
@@ -18,7 +18,7 @@ RPager::RPager(){}
 frame_t* RPager::select_victim_frame(){
 	int index = myrandom(frame_table.size());
 	//printf("index: %d\n", index);
-	//printf("ASELECT %d\n", index);
+	if(ops->a) printf("ASELECT %d\n", index);
 	frame_t* temp = frame_table[index];
 	return temp;
 }
@@ -62,13 +62,14 @@ frame_t* EPager::select_victim_frame(){
 	int frame_index = -1;
 	int scanned = 0;
 	int reset = 0;
-	if((instr_num-ins) >=50){
-		ins = instr_num;
+	//printf("ins: %d, ins_n: %lu\n", ins, instr_num );
+	if((instr_num-ins+1) >=50){
+		ins = instr_num+1;
 		reset = 1;
 	}
 	
 	int i = counter;
-	printf("ASELECT: hand=%2d %d ", i, reset);
+	if(ops->a) printf("ASELECT: hand=%2d %d ", i, reset);
 	do{
 		pte_t temp = proc_list[frame_table[i]->pid]->page_table[frame_table[i]->vpage];
 		//printf("\nvpage: %d, r: %d, m: %d\n",frame_table[i]->vpage, temp.reference, temp.modified );
@@ -116,7 +117,7 @@ frame_t* EPager::select_victim_frame(){
 		c = 3;
 		frame_index = c4;
 	}
-	printf("| %d %d %d\n",c, frame_index, scanned );
+	if(ops->a) printf("|%2d %2d %2d\n",c, frame_index, scanned );
 	if(frame_index == frame_table.size()-1)
 		counter = 0;
 	else 
@@ -133,10 +134,12 @@ frame_t* APager::select_victim_frame(){
 	int index;
 
 	int i = counter;
-	if(i == 0)
-		printf("ASELECT %d-%ld | ",i, frame_table.size()-1 );
-	else
-		printf("ASELECT %d-%d | ",i, i-1 );
+	if(i == 0){
+		if(ops->a) printf("ASELECT %d-%ld | ",i, frame_table.size()-1 );
+	}
+	else{
+		if(ops->a) printf("ASELECT %d-%d | ",i, i-1 );
+	}
 
 	do{
 		frame_table[i]->age >>= 1;
@@ -144,7 +147,7 @@ frame_t* APager::select_victim_frame(){
 			frame_table[i]->age |= 0x80000000;
 		proc_list[frame_table[i]->pid]->page_table[frame_table[i]->vpage].reference =0;
 
-		printf("%d:%x ", i, frame_table[i]->age);
+		if(ops->a) printf("%d:%x ", i, frame_table[i]->age);
 		if(frame_table[i]->age < min){
 			index = i;
 			min = frame_table[i]->age;
@@ -157,7 +160,7 @@ frame_t* APager::select_victim_frame(){
 
 	}while(i != counter);
 
-	printf(" | %d\n", index);
+	if(ops->a) printf(" | %d\n", index);
 
 	if(index == frame_table.size()-1)
 		counter = 0;
@@ -177,30 +180,32 @@ frame_t* WPager::select_victim_frame(){
 	int scanned = 0;
 
 	int i = counter;
-	if(i == 0)
-		printf("ASELECT %d-%ld | ",i, frame_table.size()-1 );
-	else
-		printf("ASELECT %d-%d | ",i, i-1 );
+	if(i == 0){
+		if(ops->a)	printf("ASELECT %d-%ld | ",i, frame_table.size()-1 );
+	}
+	else{
+		if(ops->a)	printf("ASELECT %d-%d | ",i, i-1 );
+	}
 
 	do{
 		scanned++;
-		printf("%d(%d %d:%d %d) ", i, proc_list[frame_table[i]->pid]->page_table[frame_table[i]->vpage].reference,
-			frame_table[i]->pid, frame_table[i]->vpage, frame_table[i]->age);
+		if(ops->a) printf("%d(%d %d:%d %d) ", i, proc_list[frame_table[i]->pid]->page_table[frame_table[i]->vpage].reference,
+			frame_table[i]->pid, frame_table[i]->vpage, frame_table[i]->time);
 		if(proc_list[frame_table[i]->pid]->page_table[frame_table[i]->vpage].reference){
 			proc_list[frame_table[i]->pid]->page_table[frame_table[i]->vpage].reference = 0;
-			frame_table[i]->age = instr_num;
+			frame_table[i]->time = instr_num;
 		}
-		int t_age = instr_num - frame_table[i]->age;
+		int t_age = instr_num - frame_table[i]->time;
 		//printf("age: %d ", t_age);
 		if(!proc_list[frame_table[i]->pid]->page_table[frame_table[i]->vpage].reference && t_age >= tau){
 			index = i;
-			printf("STOP(%d) ", scanned);
+			if(ops->a) printf("STOP(%d) ", scanned);
 			break;
 		}
 		else{
-			if(frame_table[i]->age < min){
+			if(frame_table[i]->time < min){
 				index = i;
-				min = frame_table[i]->age;
+				min = frame_table[i]->time;
 			}
 		}
 		if(i == frame_table.size()-1)
@@ -209,7 +214,7 @@ frame_t* WPager::select_victim_frame(){
 			i++;
 	}while(i != counter);
 
-	printf("| %d\n", index);
+	if(ops->a) printf("| %d\n", index);
 
 	if(index == frame_table.size()-1)
 		counter = 0;
